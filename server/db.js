@@ -1,19 +1,17 @@
 // server/db.js
-const mysql = require('mysql2');
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+dotenv.config();
 
-const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',         // change if needed
-  password: '077632',         // your MySQL password
-  database: 'assignment_db'
-});
-
-db.connect((err) => {
-  if (err) {
-    console.error('❌ MySQL connection failed:', err);
-  } else {
-    console.log('✅ Connected to MySQL database');
+const connectDB = async () => {
+  try {
+      await mongoose.connect(process.env.MONGO_URI);
+      console.log('✅ Connected to MongoDB Atlas');
+  } 
+  catch (err) {
+    console.error('❌ MongoDB Atlas connection failed:', err.message);
+    process.exit(1);
   }
-});
+};
 
-module.exports = db;
+module.exports = connectDB;

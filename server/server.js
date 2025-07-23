@@ -1,45 +1,35 @@
 const express = require('express');
 const cors = require('cors');
-const db = require('./db'); // Import the database connection
+const connectDB = require('./db'); // Import the database connection
+const Assignment = require('./assigmentTrackerDBModel'); // Mongoose model
 
 const app = express();
 app.use(cors());
 app.use(express.json()); // Middleware to parse JSON bodies
 
-app.get('/assignments', (req, res) => {
-  const sql = 'SELECT * FROM assignments ORDER BY session_number, submitted_at DESC';
-  db.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    res.json(results);
-  });
-});
+// Connect to MongoDB
+connectDB();
 
-// Add new assignment
-app.post('/assignments', (req, res) => {
-  const { student_name, project_link, session_number } = req.body;
-
-  if (!student_name || !project_link || !session_number) {
-    return res.status(400).json({ error: 'Missing required fields' });
+app.get('/assignments', async (req, res) => {
+  try {
+    const assignments = await Assignment.find().sort({ session_number: 1, submitted_at: -1 });
+    res.json(assignments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  const sql = `
-    INSERT INTO assignments (student_name, project_link, session_number)
-    VALUES (?, ?, ?)
-  `;
-
-  db.query(sql, [student_name, project_link, session_number], (err, result) => {
-    if (err) return res.status(500).json({ error: err });
-
-    res.json({
-      id: result.insertId,
-      student_name,
-      project_link,
-      session_number,
-      submitted_at: new Date()
-    });
-  });
 });
 
+// ✅ POST new assignment
+app.post('/assignments', async (req, res) => {
+  try {
+    const { student_name, project_link, session_number } = req.body;
+    const newAssignment = new Assignment({ student_name, project_link, session_number });
+    const saved = await newAssignment.save();
+    res.json(saved);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
 
 app.listen(3000, () => {
     console.log('Server is running on port 3000');
