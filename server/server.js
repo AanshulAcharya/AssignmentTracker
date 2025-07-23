@@ -19,7 +19,7 @@ app.get('/assignments', async (req, res) => {
   }
 });
 
-// ✅ POST new assignment
+// POST new assignment
 app.post('/assignments', async (req, res) => {
   try {
     const { student_name, project_link, session_number } = req.body;
@@ -28,6 +28,26 @@ app.post('/assignments', async (req, res) => {
     res.json(saved);
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// PUT /assignments/:id - Update assignment
+app.put('/assignments/:id', async (req, res) => {
+  try {
+    const updated = await Assignment.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// DELETE /assignments/:id - Delete assignment
+app.delete('/assignments/:id', async (req, res) => {
+  try {
+    await Assignment.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

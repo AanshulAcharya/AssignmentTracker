@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import AddAssignmentModal from './AddAssignment';
+import EditAssignmentModal from './EditAssignmentModal.jsx';
 
 function SessionManager({ searchQuery }) {
   const [assignments, setAssignments] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState(null);
 
   useEffect(() => {
     fetchAssignments();
@@ -21,6 +24,28 @@ function SessionManager({ searchQuery }) {
     setShowModal(false);
     fetchAssignments();
   };
+
+  const openEditModal = (assignment) => {
+  setSelectedAssignment(assignment);
+  setEditModalOpen(true);
+};
+
+const closeEditModal = () => {
+  setSelectedAssignment(null);
+  setEditModalOpen(false);
+};
+
+const handleSave = async (updatedAssignment) => {
+  await axios.put(`http://localhost:3000/assignments/${updatedAssignment._id}`, updatedAssignment);
+  closeEditModal();
+  fetchAssignments();
+};
+
+const handleDelete = async (id) => {
+  await axios.delete(`http://localhost:3000/assignments/${id}`);
+  closeEditModal();
+  fetchAssignments();
+};
 
   const sessions = [...new Set(assignments.map(a => a.session_number))];
 
@@ -50,7 +75,6 @@ function SessionManager({ searchQuery }) {
       <table className="table table-bordered">
         <thead className="table-light">
           <tr>
-            <th>#</th>
             <th>Student</th>
             <th>Project Link</th>
             <th>Submitted At</th>
@@ -69,8 +93,11 @@ function SessionManager({ searchQuery }) {
             )       
         .map((a, index) => (
             <tr key={a.id}>
-              <td>{index + 1}</td>
-              <td>{a.student_name}</td>
+              <td
+                onClick={() => openEditModal(a)}
+                style={{ cursor: 'pointer', color: '#0e0e0fff' }}
+              >{a.student_name}</td>
+
               <td><a href={a.project_link} target="_blank" rel="noreferrer">View</a></td>
               <td>{new Date(a.submitted_at).toLocaleString()}</td>
               <td>{a.session_number}</td>
@@ -85,7 +112,15 @@ function SessionManager({ searchQuery }) {
         onClose={() => setShowModal(false)}
         onSubmit={handleAddAssignment}
       />
+      <EditAssignmentModal
+         show={editModalOpen}
+         onClose={closeEditModal}
+         assignment={selectedAssignment}
+         onSave={handleSave}
+         onDelete={handleDelete}
+      />
     </div>
+    
   );
 }
 
